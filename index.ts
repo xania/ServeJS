@@ -42,7 +42,8 @@ wss.on('connection', (ws: WebSocket) => {
           end() {
             console.log("[" + id + "] " + ws.readyState);
             try {
-              ws.send(JSON.stringify({ source }));
+              if (ws.readyState !== 3)
+                ws.send(JSON.stringify({ source }));
             }
             catch (e) {
               console.error(e);
@@ -61,12 +62,11 @@ wss.on('connection', (ws: WebSocket) => {
 });
 
 
-/* hot module support */
-const PROXY = ".hot";
 const PORT = 8080;
 
-app.get('/*.js' + PROXY, async (req, res) => {
-  const moduleName = req.path.substr(0, req.path.length - PROXY.length);
+/* hot module support */
+app.get('/*.js.hot', async (req, res) => {
+  const moduleName = req.path.substr(0, req.path.length - 4);
   const js = path.resolve("." + moduleName);
 
   res.setHeader("Content-Type", "text/javascript");
@@ -203,7 +203,7 @@ function resolveModule(map, curDir, url) {
 
 async function sendNormalized(file: string, res: { write, end }) {
   const curDir = path.dirname(file);
-  const map = await packageNameMap();
+  const pkgNameMap = await packageNameMap();
 
   var lineReader = readline.createInterface({
     input: fs.createReadStream(file)
@@ -211,7 +211,7 @@ async function sendNormalized(file: string, res: { write, end }) {
   lineReader.on('line', (line) => {
     const imprt = parseImport(line);
     if (imprt) {
-      imprt.modulePath = resolveModule(map, curDir, imprt.modulePath).replace(/\\/g, "/");
+      imprt.modulePath = resolveModule(pkgNameMap, curDir, imprt.modulePath).replace(/\\/g, "/");
       res.write(imprt);
     } else {
       res.write(line);
