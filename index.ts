@@ -170,7 +170,7 @@ function namedExports(file: string) {
 const basedir = path.resolve(".");
 
 function resolveModule(map, curDir, url) {
-  if (url.startsWith("/")) {
+  if (url && url.startsWith("/")) {
     return url;
   }
   else if (url.startsWith(".")) {
@@ -211,8 +211,12 @@ async function sendNormalized(file: string, res: { write, end }) {
   lineReader.on('line', (line) => {
     const imprt = parseImport(line);
     if (imprt) {
-      imprt.modulePath = resolveModule(pkgNameMap, curDir, imprt.modulePath).replace(/\\/g, "/");
-      res.write(imprt);
+      try {
+        imprt.modulePath = resolveModule(pkgNameMap, curDir, imprt.modulePath).replace(/\\/g, "/");
+        res.write(imprt);
+      } catch {
+        console.error("module resolution " + file + " : " + imprt.modulePath)
+      }
     } else {
       res.write(line);
     }
