@@ -10,14 +10,34 @@ import WebSocket from "ws"
 import * as http from "http";
 import { isImport, parseImport, sourceMappingUrl } from "./esm.js"
 import { watchFile } from "./watcher.js"
+import httpProxy from "http-proxy/index.js"
 
 const babylon = babylonDew();
-
 var express = expressDew();
 var app: Application = express();
 
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+if (fs.existsSync('proxy.json')) {
+  const proxySettings = JSON.parse(fs.readFileSync('proxy.json', 'utf8'));
+  for (var key in proxySettings) {
+    var setting = proxySettings[key];
+
+    var proxy = httpProxy.createProxyServer({
+      target: setting.target,
+      changeOrigin: true
+    });
+
+    app.all(setting.source + '/*', (req, res) => {
+      const { url } = req;
+      proxy.web(req, res, {
+        target: setting.target + url.substr(setting.source.length),
+        ignorePath: true
+      });
+    })
+  }
+}
 
 wss.on('connection', (ws: WebSocket) => {
 
@@ -60,7 +80,6 @@ wss.on('connection', (ws: WebSocket) => {
   // send immediatly a feedback to the incoming connection    
   // ws.send('Hi there, I am a WebSocket server');
 });
-
 
 const PORT = 8080;
 
