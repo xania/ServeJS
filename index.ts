@@ -11,6 +11,8 @@ import * as http from "http";
 import { isImport, parseImport, sourceMappingUrl } from "./esm.js"
 import { watchFile } from "./watcher.js"
 import httpProxy from "http-proxy/index.js"
+import babel from "@babel/core"
+import * as commonjs from "rollup-plugin-commonjs"
 
 const babylon = babylonDew();
 var express = expressDew();
@@ -110,6 +112,9 @@ app.get('/*.js.hot', async (req, res) => {
 //   res.sendFile(absFilePath)
 // })
 
+/* serve static files */
+app.use(express.static(path.resolve("."), { maxage: '-1' }));
+
 app.get('/*.js', async (req, res) => {
   const moduleName = "." + req.path;
   const js = path.resolve(moduleName);
@@ -139,9 +144,36 @@ app.get('/*.js', async (req, res) => {
   }
 })
 
-/* serve static files */
-app.use(express.static(path.resolve("."), { maxage: '-1' }));
+const basedir = path.resolve(".");
+console.log({ basedir });
 
+app.get('/*', async (req, res, next) => {
+  try {
+    if (req.url.endsWith(".map")) {
+      next();
+    } else {
+      const script = await resolveScript(req.path.substr(1));
+      const options = {
+        code: true,
+        ast: false,
+        "plugins": [
+          ["transform-es2015-modules-commonjs", {
+            "allowTopLevelThis": true
+          }]
+        ]
+      };
+      const {code} = babel.transformFileSync(script, options);
+      console.log(typeof code)
+      res.setHeader("Content-Type", "text/javascript");
+      res.write(code);
+      res.end();
+    }
+  }
+  catch (ex) {
+    console.log(ex);
+    next();
+  }
+});
 /* final catch-all route to index.html defined last */
 app.get('/*', (req, res) => {
   res.sendFile(path.resolve("index.html"));
@@ -186,7 +218,31 @@ function namedExports(file: string) {
   });
 }
 
-const basedir = path.resolve(".");
+const pkgNameMap = packageNameMap();
+async function resolveScript(path) {
+  const map = await pkgNameMap;
+  for (let k in map) {
+    if (k === path) {
+      let packageName = map[k][0];
+      return resolve.sync(`./${packageName}`, { basedir });
+    }
+    else if (k.endsWith("/*")) {
+      const subk = k.substr(0, k.length - 1);
+      if (path.startsWith(subk)) {
+        const suburl = path.substr(subk.length);
+        for (let mapping of map[k]) {
+          if (mapping.endsWith("/*")) {
+            let mapped = "./" + mapping.substr(0, mapping.length - 1) + suburl;
+            console.log("found mapping " + mapped);
+            return resolve.sync(mapped);
+          }
+        }
+      }
+      // const basePath = path.resolve();
+    }
+  }
+  return resolve.sync(path);
+}
 
 function resolveModule(map, curDir, url) {
   if (url && url.startsWith("/")) {
@@ -254,9 +310,11 @@ function packageNameMap() {
   })
 }
 
-server.listen(PORT, function () {
-  console.log((new Date()) + " Server is listening on port " + PORT);
-});
+// resolveScript("rxjs/operators").then(console.log).catch(console.log);
+console.log(Object.keys(commonjs));
+// server.listen(PORT, function () {
+//   console.log((new Date()) + " Server is listening on port " + PORT);
+// });
 
 // function sourceMappingUrl(res, url) {
 //   return {
