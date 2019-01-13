@@ -10,25 +10,15 @@ export default function transform(fullpath: string, res: { write: (str: string) 
         const ast = babel.parse(source, {
             sourceType: "module"
         });
-    
+
         const namedExports: string[] = [];
         const imports = {};
         const scriptDir = fspath.dirname(fullpath);
         traverse(ast, {
-            enter(path) {
-                if (path.node.trailingComments) {
-                    path.node.trailingComments = [];
-                }
-            },
-            Directive(path) {
-                if (path.node.value.value === "use strict") {
-                    path.remove();
-                }
-            },
             Program(path) {
                 const { body } = path.node;
                 const result = [];
-                for(var i = 0; i < body.length ; i++) {
+                for (var i = 0; i < body.length; i++) {
                     var stmt = body[i];
                     if (stmt.type === 'VariableDeclaration') {
                         const { declarations } = stmt;
@@ -43,10 +33,10 @@ export default function transform(fullpath: string, res: { write: (str: string) 
             VariableDeclaration(path) {
                 const { node } = path,
                     { declarations } = node;
-    
+
                 const result = [];
-                
-                for(var i=0 ; i<declarations.length ; i++) {
+
+                for (var i = 0; i < declarations.length; i++) {
                     const decl = declarations[i];
                     if (decl.init && decl.init.type === "CallExpression") {
                         const id = decl.id.name;
@@ -60,14 +50,14 @@ export default function transform(fullpath: string, res: { write: (str: string) 
                             }
                         }
                     }
-    
+
                     result.push(decl);
                 }
-    
-                if(result.length === 0) {
+
+                if (result.length === 0) {
                     path.remove();
                 } else {
-                    path.node.declarations = result; 
+                    path.node.declarations = result;
                 }
                 // path.node.declarations = [];
                 // console.log(typeof path.parent);
@@ -86,15 +76,23 @@ export default function transform(fullpath: string, res: { write: (str: string) 
                 path.node.source.value = modulePath;
             }
         });
-    
-        for(var id in imports) {
+
+        for (var id in imports) {
             const modulePath = resolveModule(imports[id], scriptDir);
             res.write(`import * as ${id} from "${modulePath}"; // ` + imports[id])
         }
-        
-        const generated = generate(ast, { sourceMaps: false });
-    
+
+        const generated = generate(ast, { sourceMaps: false, compact: false, retainLines: true });
+
         if (namedExports.length > 0) {
+            traverse(ast, {
+                enter(path) {
+                    if (path.node.trailingComments) {
+                        path.node.trailingComments = [];
+                    }
+                }
+            });
+
             res.write("const exports = {};\n");
             res.write("(function () {\n")
             res.write(generated.code)
@@ -110,7 +108,7 @@ export default function transform(fullpath: string, res: { write: (str: string) 
         }
 
         res.end();
-    
+
     });
 }
 

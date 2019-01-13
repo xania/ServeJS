@@ -55,6 +55,11 @@ app.get('/*.js', async (req, res, next) => {
 });
 
 app.use(express.static(path.resolve("."), { maxAge: '-1' }));
+
+app.get('/*', (req, res) => {
+  res.sendFile(path.resolve("index.html"));
+})
+
 server.listen(8080, function () {
   console.log((new Date()) + " Server is listening on port " + 8080);
 });
@@ -63,5 +68,5 @@ server.listen(8080, function () {
 // {
 //     // var fullpath = resolve.sync(`rxjs/operators`, { basedir })
 //     var fullpath = resolve.sync(`./src/app`, { basedir })
-//     transform(fullpath, { write: console.log, end: _ => _ });
+//     transform(fullpath, { write: noop, end: _ => _ });
 // }
