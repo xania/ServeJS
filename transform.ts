@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as babel from "@babel/parser"
-import traverse from "babel-traverse"
-import generate from "babel-generator";
+import traverse from "@babel/traverse"
+import generate from "@babel/generator";
 import resolve from "resolve"
 import * as fspath from "path"
 
