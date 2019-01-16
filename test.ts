@@ -1,26 +1,12 @@
-import * as parser from "@babel/parser";
-import * as babel from "@babel/core"
-import * as fs from "fs"
-import { File, Program } from "@babel/types"
-import generate from '@babel/core/lib/generation'
+import transform from "./transform.js";
+import resolve from "resolve";
+import * as path from "path"
 
+const basedir = path.resolve(".");
 
-const cjs = 'C:/dev/Xania.App/servejs/node_modules/rxjs/operators/index.js';
-fs.readFile(cjs, 'utf-8', (err, data) => {
-    const commonAst = parser.parse(data);
-    const esmAst = convertFile(commonAst);
-    babel.transform(data, {}, console.log);
-});
+function noop() {}
+const write = s => process.stdout.write(s);
 
-function convertFile(ast: File): File {
-    return {
-        ...ast,
-        program: convertProgram(ast.program)
-    };
-}
-
-function convertProgram(ast: Program): Program {
-    return {
-        ...ast
-    };
-}
+// var fullpath = resolve.sync(`rxjs/operators`, { basedir })
+var fullpath = resolve.sync(`./src/app`, { basedir });
+transform(fullpath, { write: noop , end: _ => _ });
