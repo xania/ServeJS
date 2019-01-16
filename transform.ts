@@ -11,6 +11,8 @@ export default function transform(fullpath: string, res: { write: (str: string) 
             sourceType: "module"
         });
 
+        console.log(ast)
+
         const namedExports: string[] = [];
         const imports = {};
         const scriptDir = fspath.dirname(fullpath);
@@ -20,6 +22,7 @@ export default function transform(fullpath: string, res: { write: (str: string) 
                 const result = [];
                 for (var i = 0; i < body.length; i++) {
                     var stmt = body[i];
+                    console.log(stmt.type)
                     if (stmt.type === 'VariableDeclaration') {
                         const { declarations } = stmt;
                         if (declarations.length) {
@@ -85,13 +88,7 @@ export default function transform(fullpath: string, res: { write: (str: string) 
         const generated = generate(ast, { sourceMaps: false, compact: false, retainLines: true });
 
         if (namedExports.length > 0) {
-            traverse(ast, {
-                enter(path) {
-                    if (path.node.trailingComments) {
-                        path.node.trailingComments = [];
-                    }
-                }
-            });
+            ast.comments = []
 
             res.write("const exports = {};\n");
             res.write("(function () {\n")

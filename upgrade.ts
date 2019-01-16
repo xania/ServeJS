@@ -1,5 +1,4 @@
 import * as path from "path"
-import resolve from "resolve"
 import * as http from "http";
 import * as fs from "fs";
 import * as express from "express"
@@ -7,7 +6,6 @@ import { Application } from "express"
 import transform from "./transform.js"
 import httpProxy from "http-proxy"
 
-const basedir = path.resolve(".");
 const createApplication: () => Application = express['default'];
 var app: Application = createApplication();
 
