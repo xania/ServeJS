@@ -8,5 +8,8 @@ function noop() {}
 const write = s => process.stdout.write(s);
 
 // var fullpath = resolve.sync(`rxjs/operators`, { basedir })
-var fullpath = resolve.sync(`./src/app`, { basedir });
-transform(fullpath, { write: noop , end: _ => _ });
+
+// "C:/dev/github/Xania.App/pdf.js/src/shared/is_node.js"
+
+// var fullpath = resolve.sync(`./src/app`, { basedir });
+transform("C:/dev/github/Xania.App/pdf.js/src/shared/is_node.js", { write , end: _ => _ });

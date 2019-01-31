@@ -32,24 +32,24 @@ if (fs.existsSync('proxy.json')) {
 }
 
 app.get('/*.js', async (req, res, next) => {
-    const js = path.resolve("."+req.path);
+  const js = path.resolve("." + req.path);
 
-    if (!fs.existsSync(js)) {
-        next();
-        return;
+  if (!fs.existsSync(js)) {
+    next();
+    return;
+  }
+  res.setHeader("Content-Type", "text/javascript");
+  transform(js, {
+    write(line) {
+      res.write(line.toString());
+      res.write("\n");
+    },
+    end() {
+      res.end();
+
+      // delete require.cache['C:\\dev\\github\\Xania.App\\servejs\\transform.js'];
     }
-    res.setHeader("Content-Type", "text/javascript");
-    transform(js, {
-      write(line) {
-        res.write(line.toString());
-        res.write("\n");
-      },
-      end() {
-        res.end();
-
-        // delete require.cache['C:\\dev\\github\\Xania.App\\servejs\\transform.js'];
-      }
-    });
+  });
 });
 
 app.use(express.static(path.resolve("."), { maxAge: '-1' }));
