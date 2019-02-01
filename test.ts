@@ -12,4 +12,4 @@ const write = s => process.stdout.write(s);
 // "C:/dev/github/Xania.App/pdf.js/src/shared/is_node.js"
 
 // var fullpath = resolve.sync(`./src/app`, { basedir });
-transform("C:/dev/github/Xania.App/pdf.js/src/shared/is_node.js", { write , end: _ => _ });
+transform("C:/dev/github/Xania.App/pdf.js/src/shared/is_node.js", { write , end: noop });

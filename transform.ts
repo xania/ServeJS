@@ -5,18 +5,65 @@ import generate from "@babel/generator";
 import resolve from "resolve"
 import * as fspath from "path"
 
-export default function transform(fullpath: string, res: { write: (str: string) => any, end }) {
+interface Response {
+    write(str: string): any;
+    end(): any;
+}
+
+interface CacheEntry {
+    date: Date,
+    content: string[]
+}
+
+const entries: { [fullpath: string]: CacheEntry } = {};
+
+class CacheResponse implements Response {
+    public content: string[] = [];
+
+    constructor(public date: Date, public res: Response) {
+    }
+
+    write(str: string) {
+        this.content.push(str);
+        this.res.write(str);
+    }
+
+    end() {
+        this.res.end();
+    }
+};
+
+export default function transform(fullpath: string, res: Response) {
     fs.readFile(fullpath, "utf8", (err, source) => {
-        try {
-            const scriptDir = fspath.dirname(fullpath);
-            transformSource(source, scriptDir, res);    
-        } catch (ex) {
-            console.log("// =============================")
-            console.log("// " + fullpath);
-            console.log("// =============================")
-            console.log(ex);
-            res.end();
-        }
+        fs.stat(fullpath, function (err, stats) {
+            var mtime = stats.mtime;
+            let entry = entries[fullpath];
+            if (entry && mtime <= entry.date) {
+                const { content } = entry;
+                for(var i=0 ;  i<content.length ; i++) {
+                    res.write(content[i]);
+                }
+                res.end();
+                return;
+            }
+
+            if (entry) {
+                console.log("transform: " + fullpath);
+            } 
+
+            try {
+                const scriptDir = fspath.dirname(fullpath);
+                entry = new CacheResponse(mtime, res);
+                transformSource(source, scriptDir, entry);
+                entries[fullpath] = { date: mtime, content: entry.content }
+            } catch (ex) {
+                console.log("// =============================")
+                console.log("// " + fullpath);
+                console.log("// =============================")
+                console.log(ex);
+                res.end();
+            }
+        });
     });
 }
 
@@ -92,7 +139,7 @@ function transformSource(source, scriptDir, res) {
 
     for (var id in imports) {
         const modulePath = resolveModule(imports[id], scriptDir);
-        res.write(`import * as ${id} from "${modulePath}"; // ` + imports[id])
+        res.write(`import * as ${id} from "${modulePath}"; // ` + imports[id] + "\n")
     }
 
     const generated = generate(ast, { sourceMaps: false, compact: false, retainLines: true });
