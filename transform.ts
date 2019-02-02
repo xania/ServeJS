@@ -34,23 +34,23 @@ class CacheResponse implements Response {
 };
 
 export default function transform(fullpath: string, res: Response) {
-    fs.readFile(fullpath, "utf8", (err, source) => {
-        fs.stat(fullpath, function (err, stats) {
-            var mtime = stats.mtime;
-            let entry = entries[fullpath];
-            if (entry && mtime <= entry.date) {
-                const { content } = entry;
-                for(var i=0 ;  i<content.length ; i++) {
-                    res.write(content[i]);
-                }
-                res.end();
-                return;
+    fs.stat(fullpath, function (err, stats) {
+        var mtime = stats.mtime;
+        let entry = entries[fullpath];
+        if (entry && mtime <= entry.date) {
+            const { content } = entry;
+            for(var i=0 ;  i<content.length ; i++) {
+                res.write(content[i]);
             }
+            res.end();
+            return;
+        }
 
-            if (entry) {
-                console.log("transform: " + fullpath);
-            } 
+        if (entry) {
+            console.log("transform: " + fullpath);
+        } 
 
+        fs.readFile(fullpath, "utf8", (err, source) => {
             try {
                 const scriptDir = fspath.dirname(fullpath);
                 entry = new CacheResponse(mtime, res);
