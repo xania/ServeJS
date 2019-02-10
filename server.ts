@@ -31,7 +31,21 @@ const Arbeidsrecht = (async () => {
   // await delay(3000);
   // const acceptAllBtn = await faktorFrame.$('#acceptAll');
 
-  return async function (term: string) {
+  let queue = Promise.resolve();
+  const entries = {};
+
+  return function (term: string) {
+    if (!term || term.length < 4) {
+      return Promise.resolve([]);
+    }
+
+    if (entries[term]) {
+      return entries[term];
+    }
+    return entries[term] = queue = queue.then(() => search(term));
+  }
+
+  async function search(term: string) {
     await page.evaluate(() => {
       const faktor = document.querySelector("iframe#cmp-faktor-io");
       faktor && faktor.remove();
