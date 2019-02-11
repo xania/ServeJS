@@ -10,7 +10,7 @@ import puppeteer from 'puppeteer';
 const Arbeidsrecht = (async () => {
   const browser = await puppeteer.launch({
     args: ['--disable-features=site-per-process'],
-    headless: false
+    headless: true
   });
   const page = await browser.newPage();
   await page.goto('https://arbeidsrecht.sdu.nl');
@@ -39,10 +39,12 @@ const Arbeidsrecht = (async () => {
       return Promise.resolve([]);
     }
 
-    if (entries[term]) {
-      return entries[term];
+    const cacheKey = term.toLowerCase();
+
+    if (entries[cacheKey]) {
+      return entries[cacheKey];
     }
-    return entries[term] = queue = queue.then(() => search(term));
+    return entries[cacheKey] = queue = queue.then(() => search(term));
   }
 
   async function search(term: string) {
@@ -129,6 +131,11 @@ if (fs.existsSync('proxy.json')) {
     })
   }
 }
+
+app.get('/api/echo/:term', async (req, res, next) => {
+  res.write( JSON.stringify([ req.params.term ]) )
+  res.end();
+});
 
 app.get('/api/arbeidsrecht/:term', async (req, res, next) => {
   var search = await Arbeidsrecht;
