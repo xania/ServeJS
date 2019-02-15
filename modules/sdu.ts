@@ -4,26 +4,24 @@ import { Application } from 'express';
 const Arbeidsrecht = (async () => {
     const browser = await puppeteer.launch({
         args: ['--disable-features=site-per-process'],
-        headless: true
+        headless: false
     });
-    const page = await browser.newPage();
-    await page.goto('https://arbeidsrecht.sdu.nl');
-    // await page.screenshot({path: 'example.png'});
-    // await delay(100);
-    await page.waitForSelector(`#cmp-faktor-io`);
-    //  console.log(page.frames().map(f => f));
-    //  var faktorFrame = await page.$('#cmp-faktor-io');;
-    // faktorFrame.remove();
-    // console.log("wait for acceptAll")
-    //  const acceptAll = await faktorFrame.$('#acceptAll');
-    //   const outerHTML = await acceptAll.evaluate(e => e.parentNode.outerHTML);
-    //  console.log('the outerhtml: ', outerHTML);
-    // to verify we're talking about the right element.. (we are.)
-    //  await acceptAll.click();
 
-    // await faktorFrame.waitForSelector(`#acceptAll`);
-    // await delay(3000);
-    // const acceptAllBtn = await faktorFrame.$('#acceptAll');
+
+    async function loadPage() {
+        const page = await browser.newPage()
+        await page.goto('https://arbeidsrecht.sdu.nl');
+        await page.waitForSelector(`#cmp-faktor-io`);
+
+        await page.evaluate(() => {
+            const faktor = document.querySelector("iframe#cmp-faktor-io");
+            faktor && faktor.remove();
+        })
+        await page.waitForSelector(`input[name='a$word0']`);
+        return page;
+    }
+
+    const page = await loadPage();
 
     let queue = Promise.resolve();
     const entries = {};
@@ -38,18 +36,10 @@ const Arbeidsrecht = (async () => {
         if (entries[cacheKey]) {
             return entries[cacheKey];
         }
-        return entries[cacheKey] = queue = queue.then(() => search(term));
+        return entries[cacheKey] = queue = queue.then(e => search(term));
     }
 
     async function search(term: string) {
-        await page.evaluate(() => {
-            const faktor = document.querySelector("iframe#cmp-faktor-io");
-            faktor && faktor.remove();
-        })
-
-        console.log("input");
-        await page.waitForSelector(`input[name='a$word0']`);
-        console.log("type");
         const elementHandle = await page.$(`input[name='a$word0']`);
         var currentValue = await page.evaluate(e => e.value, elementHandle);
         if (currentValue !== term) {
