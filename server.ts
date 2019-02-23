@@ -9,10 +9,10 @@ import * as outlook from "./modules/outlook"
 const createApplication: () => Application = express['default'];
 var app: Application = createApplication();
 
-outlook.config(app);
-proxy.config(app);
-sdu.config(app);
-web.config(app);
+outlook.configure(app);
+proxy.configure(app);
+sdu.configure(app);
+web.configure(app);
 
 http.createServer(app).listen(8080, function () {
   console.log((new Date()) + " Server is listening on port " + 8080);

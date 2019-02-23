@@ -5,9 +5,10 @@ import * as graph from './graph';
 import {ExchangeCredentials, ExchangeService, Uri, AutodiscoverService, Folder, Item, ExchangeVersion} from "ews-javascript-api";
 import * as ews from "ews-javascript-api"
 import { WebCredentials } from "ews-javascript-api/js/Credentials/WebCredentials"
+import config from "./config"
 
 
-export function config(app: Application) {
+export function configure(app: Application) {
     // authentication setup
     const callback = (iss, sub, profile, accessToken, refreshToken, params, done) => {
         done(null, {
@@ -33,7 +34,7 @@ export function config(app: Application) {
             const exchangeVersion = ExchangeVersion.Exchange2016;
             var exch = new ExchangeService(exchangeVersion);
             exch.Url = new ews.Uri("https://outlook.office365.com/Ews/Exchange.asmx"); // you can also use exch.AutodiscoverUrl
-            exch.Credentials = new WebCredentials(userName(), password());
+            exch.Credentials = new WebCredentials(config.userName, config.password);
 
             var findItemView = new ews.ItemView(1);
             findItemView.PropertySet = new ews.PropertySet(ews.BasePropertySet.IdOnly);
@@ -60,7 +61,7 @@ export function config(app: Application) {
             const exchangeVersion = ExchangeVersion.Exchange2016;
             var exch = new ExchangeService(exchangeVersion);
             exch.Url = new ews.Uri("https://outlook.office365.com/Ews/Exchange.asmx"); // you can also use exch.AutodiscoverUrl
-            exch.Credentials = new WebCredentials(userName(), password());
+            exch.Credentials = new WebCredentials(config.userName, config.password);
             const r = await exch.FindItems(ews.WellKnownFolderName.Inbox, req.params.term, new ews.ItemView(20))
             await loadBodyText(exch, r.Items);
             
@@ -83,7 +84,7 @@ export function config(app: Application) {
             const exchangeVersion = ExchangeVersion.Exchange2016;
             var exch = new ExchangeService(exchangeVersion);
             var autod = new AutodiscoverService(new Uri("https://autodiscover-s.outlook.com/autodiscover/autodiscover.svc"), exchangeVersion);
-            autod.Credentials = new WebCredentials(userName(), password());
+            autod.Credentials = new WebCredentials(config.userName, config.password);
             var settingNames = [
                 ews.UserSettingName.InternalEwsUrl,
                 ews.UserSettingName.ExternalEwsUrl,
@@ -160,13 +161,6 @@ export function config(app: Application) {
 //         // });
 
 //     });
-}
-
-function userName() {
-    return "user";
-}
-function password() {
-    return "password";
 }
 
 function itemToJson(item: Item) {

@@ -4,7 +4,7 @@ import transform from "../transform.js"
 import * as path from "path"
 import * as fs from "fs";
 
-export function config(app: Application) {
+export function configure(app: Application) {
 
     app.get('/*.js', async (req, res, next) => {
         const js = path.resolve("." + req.path);

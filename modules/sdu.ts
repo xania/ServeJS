@@ -91,7 +91,7 @@ const Arbeidsrecht = (async () => {
     }
 })();
 
-export function config(app: Application) {
+export function configure(app: Application) {
     app.get('/api/echo/:term', async (req, res, next) => {
         res.write(JSON.stringify([req.params.term]))
         res.end();

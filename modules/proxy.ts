@@ -2,7 +2,7 @@ import { Application } from "express";
 import httpProxy from "http-proxy"
 import * as fs from "fs";
 
-export function config(app: Application) {
+export function configure(app: Application) {
     if (fs.existsSync('proxy.json')) {
         const proxySettings = JSON.parse(fs.readFileSync('proxy.json', 'utf8'));
         for (var key in proxySettings) {
