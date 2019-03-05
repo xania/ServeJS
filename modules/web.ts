@@ -29,7 +29,7 @@ export function configure(app: Application) {
 
     app.use(express.static(path.resolve("."), { maxAge: '-1' }));
 
-    app.get('/*', (req, res) => {
-        res.sendFile(path.resolve("index.html"));
+    app.get('/admin/*', (req, res) => {
+        res.sendFile(path.resolve("admin/index.html"));
     })
 }
